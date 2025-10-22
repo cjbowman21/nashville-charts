@@ -22,6 +22,84 @@ public class AuthController : ControllerBase
         _userManager = userManager;
     }
 
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var user = new ApplicationUser
+        {
+            UserName = request.Email,
+            Email = request.Email,
+            DisplayName = request.DisplayName ?? request.Email.Split('@')[0],
+            EmailConfirmed = true, // Set to false if you want email verification
+            CreatedAt = DateTime.UtcNow,
+            LastLoginAt = DateTime.UtcNow
+        };
+
+        var result = await _userManager.CreateAsync(user, request.Password);
+
+        if (result.Succeeded)
+        {
+            await _signInManager.SignInAsync(user, isPersistent: true);
+
+            return Ok(new
+            {
+                message = "Registration successful",
+                user = new
+                {
+                    id = user.Id,
+                    email = user.Email,
+                    displayName = user.DisplayName,
+                    userName = user.UserName
+                }
+            });
+        }
+
+        return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _signInManager.PasswordSignInAsync(
+            request.Email,
+            request.Password,
+            isPersistent: request.RememberMe,
+            lockoutOnFailure: true);
+
+        if (result.Succeeded)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user != null)
+            {
+                user.LastLoginAt = DateTime.UtcNow;
+                await _userManager.UpdateAsync(user);
+
+                return Ok(new
+                {
+                    message = "Login successful",
+                    user = new
+                    {
+                        id = user.Id,
+                        email = user.Email,
+                        displayName = user.DisplayName,
+                        userName = user.UserName
+                    }
+                });
+            }
+        }
+
+        if (result.IsLockedOut)
+            return BadRequest(new { error = "Account locked out. Please try again later." });
+
+        return Unauthorized(new { error = "Invalid email or password" });
+    }
+
     [HttpGet("login/{provider}")]
     public IActionResult ExternalLogin(string provider, string? returnUrl = null)
     {
@@ -146,4 +224,19 @@ public class AuthController : ControllerBase
             }
         });
     }
+}
+
+// Request models
+public class RegisterRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
+}
+
+public class LoginRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public bool RememberMe { get; set; } = false;
 }

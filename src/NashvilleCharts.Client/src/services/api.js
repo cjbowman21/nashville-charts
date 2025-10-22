@@ -11,7 +11,9 @@ const api = axios.create({
 // Auth API
 export const authApi = {
   getCurrentUser: () => api.get('/auth/user'),
-  login: (provider) => {
+  register: (data) => api.post('/auth/register', data),
+  loginWithPassword: (data) => api.post('/auth/login', data),
+  loginWithProvider: (provider) => {
     window.location.href = `/api/auth/login/${provider}`
   },
   logout: () => api.post('/auth/logout')

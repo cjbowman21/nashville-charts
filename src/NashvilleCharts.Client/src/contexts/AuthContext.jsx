@@ -24,8 +24,32 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const login = (provider) => {
-    authApi.login(provider)
+  const register = async (email, password, displayName) => {
+    try {
+      const response = await authApi.register({ email, password, displayName })
+      setUser(response.data.user)
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.errors?.join(', ') ||
+                      error.response?.data?.error ||
+                      'Registration failed'
+      return { success: false, error: message }
+    }
+  }
+
+  const loginWithPassword = async (email, password, rememberMe = false) => {
+    try {
+      const response = await authApi.loginWithPassword({ email, password, rememberMe })
+      setUser(response.data.user)
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.error || 'Login failed'
+      return { success: false, error: message }
+    }
+  }
+
+  const loginWithProvider = (provider) => {
+    authApi.loginWithProvider(provider)
   }
 
   const logout = async () => {
@@ -38,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, register, loginWithPassword, loginWithProvider, logout }}>
       {children}
     </AuthContext.Provider>
   )
