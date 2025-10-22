@@ -1,0 +1,87 @@
+.chord-display {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0.5rem;
+  min-width: 3rem;
+}
+
+.chord-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #2c3e50;
+}
+
+/* Split measure chords are underlined */
+.chord-display.split .chord-text {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Diamond modifier */
+.diamond-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.diamond-symbol {
+  font-size: 1.8rem;
+  color: #3498db;
+  margin-right: -0.2rem;
+}
+
+/* Push modifiers */
+.modifier-symbol {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.modifier-symbol.push-back {
+  margin-right: 0.1rem;
+}
+
+.modifier-symbol.push-forward {
+  margin-left: 0.1rem;
+}
+
+/* Staccato modifier (above chord) */
+.modifier-symbol.staccato {
+  position: absolute;
+  top: -0.2rem;
+  font-size: 1.5rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chord-display {
+    padding: 0.4rem;
+    min-width: 2.5rem;
+  }
+
+  .chord-text {
+    font-size: 1.3rem;
+  }
+
+  .diamond-symbol {
+    font-size: 1.5rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .chord-text {
+    color: #000;
+  }
+
+  .diamond-symbol {
+    color: #000;
+  }
+
+  .modifier-symbol {
+    color: #000;
+  }
+}

@@ -7,6 +7,7 @@ import ChartView from './pages/ChartView'
 import MyCharts from './pages/MyCharts'
 import Browse from './pages/Browse'
 import Login from './pages/Login'
+import ChartDemo from './pages/ChartDemo'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/browse" element={<Browse />} />
+          <Route path="/demo" element={<ChartDemo />} />
           <Route path="/charts/new" element={<ChartEditor />} />
           <Route path="/charts/:id" element={<ChartView />} />
           <Route path="/charts/:id/edit" element={<ChartEditor />} />

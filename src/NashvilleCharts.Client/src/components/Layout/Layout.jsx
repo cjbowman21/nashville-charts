@@ -15,6 +15,7 @@ function Layout({ children }) {
             <Nav className="me-auto">
               <Nav.Link as={Link} to="/">Home</Nav.Link>
               <Nav.Link as={Link} to="/browse">Browse Charts</Nav.Link>
+              <Nav.Link as={Link} to="/demo">Demo</Nav.Link>
               {user && (
                 <>
                   <Nav.Link as={Link} to="/my-charts">My Charts</Nav.Link>
