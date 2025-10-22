@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 import SectionDisplay from './SectionDisplay'
 import { getChartStats } from '../../utils/chartUtils'
 import './ChartRenderer.css'
@@ -10,6 +11,18 @@ import './ChartRenderer.css'
  */
 function ChartRenderer({ chart, showMetadata = true }) {
   const stats = getChartStats(chart)
+
+  const keyTooltip = (
+    <Tooltip>The musical key of the song - all numerals are relative to this key</Tooltip>
+  )
+
+  const timeSignatureTooltip = (
+    <Tooltip>Time signature - number of beats per measure / which note gets the beat</Tooltip>
+  )
+
+  const tempoTooltip = (
+    <Tooltip>Tempo in beats per minute (BPM) - how fast the song is played</Tooltip>
+  )
 
   return (
     <div className="chart-renderer">
@@ -22,16 +35,22 @@ function ChartRenderer({ chart, showMetadata = true }) {
           )}
 
           <div className="chart-metadata">
-            <span className="metadata-item">
-              <strong>Key:</strong> {chart.key}
-            </span>
-            <span className="metadata-item">
-              <strong>Time:</strong> {chart.timeSignature}
-            </span>
-            {chart.tempo && (
+            <OverlayTrigger placement="top" overlay={keyTooltip}>
               <span className="metadata-item">
-                <strong>Tempo:</strong> {chart.tempo} BPM
+                <strong>Key:</strong> {chart.key}
               </span>
+            </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={timeSignatureTooltip}>
+              <span className="metadata-item">
+                <strong>Time:</strong> {chart.timeSignature}
+              </span>
+            </OverlayTrigger>
+            {chart.tempo && (
+              <OverlayTrigger placement="top" overlay={tempoTooltip}>
+                <span className="metadata-item">
+                  <strong>Tempo:</strong> {chart.tempo} BPM
+                </span>
+              </OverlayTrigger>
             )}
             {stats.durationFormatted && (
               <span className="metadata-item">
@@ -55,6 +74,7 @@ function ChartRenderer({ chart, showMetadata = true }) {
             key={index}
             section={section}
             measuresPerLine={chart.measuresPerLine}
+            chartKey={chart.key}
           />
         ))}
       </div>

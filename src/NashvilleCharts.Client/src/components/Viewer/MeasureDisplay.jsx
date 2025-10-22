@@ -6,7 +6,7 @@ import './MeasureDisplay.css'
 /**
  * Displays a single measure with one or more chords
  */
-function MeasureDisplay({ measure }) {
+function MeasureDisplay({ measure, chartKey = null }) {
   const isSplit = measure.chords.length > 1
 
   return (
@@ -16,6 +16,7 @@ function MeasureDisplay({ measure }) {
           key={index}
           chord={chord}
           isSplit={isSplit}
+          chartKey={chartKey}
         />
       ))}
     </div>
@@ -23,7 +24,8 @@ function MeasureDisplay({ measure }) {
 }
 
 MeasureDisplay.propTypes = {
-  measure: PropTypes.object.isRequired
+  measure: PropTypes.object.isRequired,
+  chartKey: PropTypes.string
 }
 
 export default MeasureDisplay
