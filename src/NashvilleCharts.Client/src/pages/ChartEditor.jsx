@@ -140,7 +140,7 @@ function ChartEditor() {
         timeSignature: chart.timeSignature,
         tempo: chart.tempo,
         content: JSON.stringify(chart.toJSON()),
-        isPublic: false,
+        isPublic: true,
         allowComments: true
       }
 
