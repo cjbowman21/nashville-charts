@@ -1,0 +1,60 @@
+/* ChartEditor.css - Styles for the chart editor page */
+
+.chart-editor {
+  min-height: 100vh;
+}
+
+/* Drag and drop styles */
+.sortable-measure {
+  transition: transform 0.2s ease;
+}
+
+.sortable-measure.dragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+.sortable-measure:active {
+  cursor: grabbing;
+}
+
+/* Drag handle styles */
+.drag-handle {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Visual feedback for draggable items */
+.measure-group {
+  background: var(--bs-light);
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.measure-group:hover {
+  background: var(--bs-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.measure-group.dragging {
+  background: var(--bs-white);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+/* Mobile-friendly touch targets */
+@media (max-width: 768px) {
+  .drag-handle {
+    font-size: 1.5rem;
+    padding: 0.25rem;
+  }
+}

@@ -1,17 +1,90 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Container, Row, Col, Form, Button, Card, ButtonGroup, Alert } from 'react-bootstrap'
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useAuth } from '../contexts/AuthContext'
 import { chartsApi } from '../services/api'
 import Chart, { Section, Measure, Chord, SectionTypes } from '../models/Chart'
 import ChartRenderer from '../components/Viewer/ChartRenderer'
 import ChordBottomSheet from '../components/Editor/ChordBottomSheet'
 import { KEYS } from '../utils/chartUtils'
+import './ChartEditor.css'
+
+// Sortable Measure component for drag and drop
+function SortableMeasure({ id, measure, sectionIndex, measureIndex, onEdit, onRemove }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`measure-group d-flex align-items-center gap-1 ${isDragging ? 'dragging' : ''}`}
+    >
+      {/* Drag handle - the entire measure group */}
+      <div {...attributes} {...listeners} className="drag-handle d-flex gap-1 align-items-center">
+        <span className="text-muted">⋮⋮</span>
+        <div className="d-flex gap-1">
+          {measure.chords.map((chord, cIndex) => (
+            <Button
+              key={cIndex}
+              variant="outline-primary"
+              size="sm"
+              onClick={() => onEdit(sectionIndex, measureIndex, cIndex)}
+              title="Click to edit"
+            >
+              {chord.toString()}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Delete measure button */}
+      <Button
+        variant="link"
+        size="sm"
+        className="text-danger p-0"
+        onClick={() => onRemove(sectionIndex, measureIndex)}
+        title="Delete measure"
+      >
+        ×
+      </Button>
+    </div>
+  )
+}
 
 function ChartEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+
+  // Set up drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required to start drag
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // 200ms hold to start drag on touch
+        tolerance: 5,
+      },
+    })
+  )
 
   // Chart state
   const [chart, setChart] = useState(new Chart())
@@ -163,19 +236,25 @@ function ChartEditor() {
     })
   }
 
-  const moveMeasure = (sectionIndex, measureIndex, direction) => {
+  const handleDragEnd = (event, sectionIndex) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) {
+      return
+    }
+
     setChart(prevChart => {
       const updated = Chart.fromJSON(prevChart.toJSON())
       const section = updated.sections[sectionIndex]
       const measures = section.measures
 
-      const newIndex = direction === 'up' ? measureIndex - 1 : measureIndex + 1
-      if (newIndex < 0 || newIndex >= measures.length) return prevChart
+      // Get old and new indices from the IDs
+      const oldIndex = measures.findIndex((_, i) => `${sectionIndex}-${i}` === active.id)
+      const newIndex = measures.findIndex((_, i) => `${sectionIndex}-${i}` === over.id)
 
-      // Swap measures
-      const temp = measures[measureIndex]
-      measures[measureIndex] = measures[newIndex]
-      measures[newIndex] = temp
+      // Reorder the array
+      const [removed] = measures.splice(oldIndex, 1)
+      measures.splice(newIndex, 0, removed)
 
       return updated
     })
@@ -341,61 +420,30 @@ function ChartEditor() {
                         <p className="text-muted">No measures yet.</p>
                       )}
 
-                      <div className="d-flex flex-wrap gap-2 mb-3">
-                        {section.measures.map((measure, mIndex) => (
-                          <div key={mIndex} className="d-flex align-items-center gap-1">
-                            {/* Move buttons */}
-                            <div className="d-flex flex-column" style={{ width: '24px' }}>
-                              <Button
-                                variant="link"
-                                size="sm"
-                                className="p-0 text-secondary"
-                                style={{ fontSize: '0.75rem', lineHeight: '0.75rem' }}
-                                onClick={() => moveMeasure(sIndex, mIndex, 'up')}
-                                disabled={mIndex === 0}
-                              >
-                                ▲
-                              </Button>
-                              <Button
-                                variant="link"
-                                size="sm"
-                                className="p-0 text-secondary"
-                                style={{ fontSize: '0.75rem', lineHeight: '0.75rem' }}
-                                onClick={() => moveMeasure(sIndex, mIndex, 'down')}
-                                disabled={mIndex === section.measures.length - 1}
-                              >
-                                ▼
-                              </Button>
-                            </div>
-
-                            {/* Chord buttons - clickable to edit */}
-                            <div className="d-flex gap-1">
-                              {measure.chords.map((chord, cIndex) => (
-                                <Button
-                                  key={cIndex}
-                                  variant="outline-primary"
-                                  size="sm"
-                                  onClick={() => editChord(sIndex, mIndex, cIndex)}
-                                  title="Click to edit"
-                                >
-                                  {chord.toString()}
-                                </Button>
-                              ))}
-                            </div>
-
-                            {/* Delete measure button */}
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="text-danger p-0"
-                              onClick={() => removeMeasure(sIndex, mIndex)}
-                              title="Delete measure"
-                            >
-                              ×
-                            </Button>
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={(event) => handleDragEnd(event, sIndex)}
+                      >
+                        <SortableContext
+                          items={section.measures.map((_, mIndex) => `${sIndex}-${mIndex}`)}
+                          strategy={horizontalListSortingStrategy}
+                        >
+                          <div className="d-flex flex-wrap gap-2 mb-3">
+                            {section.measures.map((measure, mIndex) => (
+                              <SortableMeasure
+                                key={`${sIndex}-${mIndex}`}
+                                id={`${sIndex}-${mIndex}`}
+                                measure={measure}
+                                sectionIndex={sIndex}
+                                measureIndex={mIndex}
+                                onEdit={editChord}
+                                onRemove={removeMeasure}
+                              />
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </SortableContext>
+                      </DndContext>
 
                       <Button
                         variant="primary"
