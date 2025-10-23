@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Container, Row, Col, Form, Button, Card, ButtonGroup, Alert } from 'react-bootstrap'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -9,6 +9,7 @@ import { chartsApi } from '../services/api'
 import Chart, { Section, Measure, Chord, SectionTypes } from '../models/Chart'
 import ChartRenderer from '../components/Viewer/ChartRenderer'
 import ChordBottomSheet from '../components/Editor/ChordBottomSheet'
+import ExportButton from '../components/Common/ExportButton'
 import { KEYS } from '../utils/chartUtils'
 import './ChartEditor.css'
 
@@ -98,6 +99,9 @@ function ChartEditor() {
   const [editingSection, setEditingSection] = useState(null)
   const [editingMeasure, setEditingMeasure] = useState(null)
   const [editingChordIndex, setEditingChordIndex] = useState(null)
+
+  // Ref for PDF export
+  const chartPreviewRef = useRef(null)
 
   useEffect(() => {
     if (!user) {
@@ -480,12 +484,22 @@ function ChartEditor() {
         {/* Right Panel: Preview */}
         <Col lg={6}>
           <Card className="sticky-top" style={{ top: '1rem' }}>
-            <Card.Header>
-              <h5>Preview</h5>
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Preview</h5>
+              {chart.title && chart.sections.length > 0 && (
+                <ExportButton
+                  chart={chart}
+                  elementRef={chartPreviewRef}
+                  size="sm"
+                  variant="outline-primary"
+                />
+              )}
             </Card.Header>
             <Card.Body>
               {chart.title ? (
-                <ChartRenderer chart={chart} showMetadata={true} />
+                <div ref={chartPreviewRef}>
+                  <ChartRenderer chart={chart} showMetadata={true} />
+                </div>
               ) : (
                 <Alert variant="info">
                   Fill in the chart details to see a preview
