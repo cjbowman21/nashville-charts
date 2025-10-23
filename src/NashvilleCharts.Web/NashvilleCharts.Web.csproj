@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <SpaRoot>ClientApp\</SpaRoot>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,5 +22,11 @@
     <ProjectReference Include="..\NashvilleCharts.Core\NashvilleCharts.Core.csproj" />
     <ProjectReference Include="..\NashvilleCharts.Infrastructure\NashvilleCharts.Infrastructure.csproj" />
   </ItemGroup>
+
+  <!-- Build the React app when publishing -->
+  <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
+  </Target>
 
 </Project>

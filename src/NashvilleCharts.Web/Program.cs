@@ -56,18 +56,6 @@ builder.Services.AddScoped<IChartRepository, ChartRepository>();
 builder.Services.AddScoped<IVoteRepository, VoteRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
-// Add CORS for React development
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactApp", policy =>
-    {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
 // Add Swagger for API documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -91,16 +79,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseCors("AllowReactApp");
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
 // API routes
 app.MapControllers();
+
+// SPA fallback - serve index.html for all non-API routes
+app.MapFallbackToFile("index.html");
 
 app.Run();
