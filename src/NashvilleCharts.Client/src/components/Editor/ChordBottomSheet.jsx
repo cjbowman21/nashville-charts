@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { Modal, Button, ButtonGroup, Badge } from 'react-bootstrap'
 import { ChordModifiers } from '../../models/Chart'
@@ -8,11 +8,24 @@ import './ChordBottomSheet.css'
  * Bottom sheet for selecting chord numerals and modifiers
  * Mobile-first design with large touch targets
  */
-function ChordBottomSheet({ show, onHide, onChordSelected }) {
+function ChordBottomSheet({ show, onHide, onChordSelected, initialData = null }) {
   const [selectedNumeral, setSelectedNumeral] = useState(null)
   const [selectedAccidental, setSelectedAccidental] = useState(null)
   const [selectedModifiers, setSelectedModifiers] = useState([])
   const [bassNote, setBassNote] = useState(null)
+
+  // Pre-populate form when editing existing chord
+  useEffect(() => {
+    if (show && initialData) {
+      setSelectedNumeral(initialData.numeral || null)
+      setSelectedAccidental(initialData.accidental || null)
+      setSelectedModifiers(initialData.modifiers || [])
+      setBassNote(initialData.bassNote || null)
+    } else if (show && !initialData) {
+      // Reset when creating new chord
+      handleReset()
+    }
+  }, [show, initialData])
 
   const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
   const accidentals = [
@@ -81,7 +94,7 @@ function ChordBottomSheet({ show, onHide, onChordSelected }) {
       className="chord-bottom-sheet"
     >
       <Modal.Header closeButton>
-        <Modal.Title>Add Chord</Modal.Title>
+        <Modal.Title>{initialData ? 'Edit Chord' : 'Add Chord'}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -211,7 +224,7 @@ function ChordBottomSheet({ show, onHide, onChordSelected }) {
           Reset
         </Button>
         <Button variant="primary" onClick={handleAdd} disabled={!selectedNumeral}>
-          Add Chord
+          {initialData ? 'Update Chord' : 'Add Chord'}
         </Button>
       </Modal.Footer>
     </Modal>
@@ -221,7 +234,13 @@ function ChordBottomSheet({ show, onHide, onChordSelected }) {
 ChordBottomSheet.propTypes = {
   show: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
-  onChordSelected: PropTypes.func.isRequired
+  onChordSelected: PropTypes.func.isRequired,
+  initialData: PropTypes.shape({
+    numeral: PropTypes.string,
+    accidental: PropTypes.string,
+    modifiers: PropTypes.array,
+    bassNote: PropTypes.string
+  })
 }
 
 export default ChordBottomSheet

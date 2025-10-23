@@ -24,6 +24,7 @@ function ChartEditor() {
   const [showChordSheet, setShowChordSheet] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
   const [editingMeasure, setEditingMeasure] = useState(null)
+  const [editingChordIndex, setEditingChordIndex] = useState(null)
 
   useEffect(() => {
     if (!user) {
@@ -81,18 +82,34 @@ function ChartEditor() {
     }
   }
 
+  const updateChartMetadata = (field, value) => {
+    setChart(prevChart => {
+      const updated = Chart.fromJSON(prevChart.toJSON())
+      updated[field] = value
+      return updated
+    })
+  }
+
   const addSection = (type) => {
     const newSection = new Section(type, `${type.charAt(0).toUpperCase() + type.slice(1)} ${chart.sections.length + 1}`, [])
     setChart(prevChart => {
-      const updated = { ...prevChart }
-      updated.sections = [...updated.sections, newSection]
+      const updated = Chart.fromJSON(prevChart.toJSON())
+      updated.sections.push(newSection)
+      return updated
+    })
+  }
+
+  const updateSectionLabel = (sectionIndex, label) => {
+    setChart(prevChart => {
+      const updated = Chart.fromJSON(prevChart.toJSON())
+      updated.sections[sectionIndex].label = label
       return updated
     })
   }
 
   const removeSection = (index) => {
     setChart(prevChart => {
-      const updated = { ...prevChart }
+      const updated = Chart.fromJSON(prevChart.toJSON())
       updated.sections = updated.sections.filter((_, i) => i !== index)
       return updated
     })
@@ -101,6 +118,14 @@ function ChartEditor() {
   const addMeasure = (sectionIndex) => {
     setEditingSection(sectionIndex)
     setEditingMeasure(null)
+    setEditingChordIndex(null)
+    setShowChordSheet(true)
+  }
+
+  const editChord = (sectionIndex, measureIndex, chordIndex) => {
+    setEditingSection(sectionIndex)
+    setEditingMeasure(measureIndex)
+    setEditingChordIndex(chordIndex)
     setShowChordSheet(true)
   }
 
@@ -109,12 +134,15 @@ function ChartEditor() {
     chord.accidental = chordData.accidental
 
     setChart(prevChart => {
-      const updated = { ...prevChart }
+      const updated = Chart.fromJSON(prevChart.toJSON())
       const section = updated.sections[editingSection]
 
       if (editingMeasure === null) {
         // Add new measure
         section.measures.push(Measure.single(chord))
+      } else if (editingChordIndex !== null) {
+        // Edit existing chord
+        section.measures[editingMeasure].chords[editingChordIndex] = chord
       } else {
         // Add chord to existing measure (make it split)
         section.measures[editingMeasure].chords.push(chord)
@@ -124,14 +152,46 @@ function ChartEditor() {
     })
 
     setShowChordSheet(false)
+    setEditingChordIndex(null)
   }
 
   const removeMeasure = (sectionIndex, measureIndex) => {
     setChart(prevChart => {
-      const updated = { ...prevChart }
+      const updated = Chart.fromJSON(prevChart.toJSON())
       updated.sections[sectionIndex].measures = updated.sections[sectionIndex].measures.filter((_, i) => i !== measureIndex)
       return updated
     })
+  }
+
+  const moveMeasure = (sectionIndex, measureIndex, direction) => {
+    setChart(prevChart => {
+      const updated = Chart.fromJSON(prevChart.toJSON())
+      const section = updated.sections[sectionIndex]
+      const measures = section.measures
+
+      const newIndex = direction === 'up' ? measureIndex - 1 : measureIndex + 1
+      if (newIndex < 0 || newIndex >= measures.length) return prevChart
+
+      // Swap measures
+      const temp = measures[measureIndex]
+      measures[measureIndex] = measures[newIndex]
+      measures[newIndex] = temp
+
+      return updated
+    })
+  }
+
+  const getInitialChordData = () => {
+    if (editingMeasure !== null && editingChordIndex !== null) {
+      const chord = chart.sections[editingSection].measures[editingMeasure].chords[editingChordIndex]
+      return {
+        numeral: chord.numeral,
+        accidental: chord.accidental,
+        modifiers: chord.modifiers,
+        bassNote: chord.bassNote
+      }
+    }
+    return null
   }
 
   if (!user) {
@@ -159,7 +219,7 @@ function ChartEditor() {
                     type="text"
                     placeholder="Song title"
                     value={chart.title}
-                    onChange={(e) => setChart({ ...chart, title: e.target.value })}
+                    onChange={(e) => updateChartMetadata('title', e.target.value)}
                     required
                   />
                 </Form.Group>
@@ -170,7 +230,7 @@ function ChartEditor() {
                     type="text"
                     placeholder="Artist name"
                     value={chart.artist}
-                    onChange={(e) => setChart({ ...chart, artist: e.target.value })}
+                    onChange={(e) => updateChartMetadata('artist', e.target.value)}
                   />
                 </Form.Group>
 
@@ -180,7 +240,7 @@ function ChartEditor() {
                       <Form.Label>Key *</Form.Label>
                       <Form.Select
                         value={chart.key}
-                        onChange={(e) => setChart({ ...chart, key: e.target.value })}
+                        onChange={(e) => updateChartMetadata('key', e.target.value)}
                       >
                         {KEYS.map(key => (
                           <option key={key} value={key}>{key}</option>
@@ -193,7 +253,7 @@ function ChartEditor() {
                       <Form.Label>Time</Form.Label>
                       <Form.Select
                         value={chart.timeSignature}
-                        onChange={(e) => setChart({ ...chart, timeSignature: e.target.value })}
+                        onChange={(e) => updateChartMetadata('timeSignature', e.target.value)}
                       >
                         <option value="4/4">4/4</option>
                         <option value="3/4">3/4</option>
@@ -210,7 +270,7 @@ function ChartEditor() {
                         min="40"
                         max="240"
                         value={chart.tempo || ''}
-                        onChange={(e) => setChart({ ...chart, tempo: parseInt(e.target.value) || null })}
+                        onChange={(e) => updateChartMetadata('tempo', parseInt(e.target.value) || null)}
                       />
                     </Form.Group>
                   </Col>
@@ -223,7 +283,7 @@ function ChartEditor() {
                     rows={2}
                     placeholder="Optional notes about the chart"
                     value={chart.notes || ''}
-                    onChange={(e) => setChart({ ...chart, notes: e.target.value })}
+                    onChange={(e) => updateChartMetadata('notes', e.target.value)}
                   />
                 </Form.Group>
               </Form>
@@ -265,11 +325,7 @@ function ChartEditor() {
                       <Form.Control
                         type="text"
                         value={section.label}
-                        onChange={(e) => {
-                          const updated = { ...chart }
-                          updated.sections[sIndex].label = e.target.value
-                          setChart(updated)
-                        }}
+                        onChange={(e) => updateSectionLabel(sIndex, e.target.value)}
                         className="w-50"
                       />
                       <Button
@@ -287,19 +343,53 @@ function ChartEditor() {
 
                       <div className="d-flex flex-wrap gap-2 mb-3">
                         {section.measures.map((measure, mIndex) => (
-                          <div key={mIndex} className="d-flex align-items-center">
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              className="measure-preview"
-                            >
-                              {measure.chords.map(c => c.toString()).join(' ')}
-                            </Button>
+                          <div key={mIndex} className="d-flex align-items-center gap-1">
+                            {/* Move buttons */}
+                            <div className="d-flex flex-column" style={{ width: '24px' }}>
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="p-0 text-secondary"
+                                style={{ fontSize: '0.75rem', lineHeight: '0.75rem' }}
+                                onClick={() => moveMeasure(sIndex, mIndex, 'up')}
+                                disabled={mIndex === 0}
+                              >
+                                ▲
+                              </Button>
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="p-0 text-secondary"
+                                style={{ fontSize: '0.75rem', lineHeight: '0.75rem' }}
+                                onClick={() => moveMeasure(sIndex, mIndex, 'down')}
+                                disabled={mIndex === section.measures.length - 1}
+                              >
+                                ▼
+                              </Button>
+                            </div>
+
+                            {/* Chord buttons - clickable to edit */}
+                            <div className="d-flex gap-1">
+                              {measure.chords.map((chord, cIndex) => (
+                                <Button
+                                  key={cIndex}
+                                  variant="outline-primary"
+                                  size="sm"
+                                  onClick={() => editChord(sIndex, mIndex, cIndex)}
+                                  title="Click to edit"
+                                >
+                                  {chord.toString()}
+                                </Button>
+                              ))}
+                            </div>
+
+                            {/* Delete measure button */}
                             <Button
                               variant="link"
                               size="sm"
-                              className="text-danger p-0 ms-1"
+                              className="text-danger p-0"
                               onClick={() => removeMeasure(sIndex, mIndex)}
+                              title="Delete measure"
                             >
                               ×
                             </Button>
@@ -361,8 +451,12 @@ function ChartEditor() {
       {/* Chord Bottom Sheet */}
       <ChordBottomSheet
         show={showChordSheet}
-        onHide={() => setShowChordSheet(false)}
+        onHide={() => {
+          setShowChordSheet(false)
+          setEditingChordIndex(null)
+        }}
         onChordSelected={handleChordSelected}
+        initialData={getInitialChordData()}
       />
     </Container>
   )
