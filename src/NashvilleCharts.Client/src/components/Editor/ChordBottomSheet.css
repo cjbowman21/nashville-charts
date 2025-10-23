@@ -1,0 +1,135 @@
+.chord-bottom-sheet .modal-body {
+  padding: 1.5rem;
+}
+
+.selection-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.selection-section:last-of-type {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+/* Numeral buttons */
+.numeral-buttons .btn {
+  flex: 1;
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: 1rem;
+  font-family: 'Georgia', serif;
+}
+
+/* Modifier grid */
+.modifier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.modifier-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  min-height: 80px;
+  text-align: center;
+}
+
+.modifier-symbol {
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.modifier-symbol.large {
+  font-size: 2rem;
+}
+
+.modifier-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.modifier-desc {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+/* Chord preview */
+.chord-preview {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.preview-chord {
+  font-size: 3rem;
+  font-family: 'Georgia', serif;
+  font-weight: 700;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.preview-numeral {
+  font-size: 3.5rem;
+}
+
+.preview-modifier {
+  font-size: 2rem;
+}
+
+.preview-bass {
+  font-size: 2.5rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .numeral-buttons .btn {
+    font-size: 1.2rem;
+    padding: 0.75rem;
+  }
+
+  .modifier-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modifier-btn {
+    min-height: 70px;
+    padding: 0.75rem;
+  }
+
+  .modifier-symbol {
+    font-size: 1.2rem;
+  }
+
+  .modifier-symbol.large {
+    font-size: 1.5rem;
+  }
+
+  .preview-chord {
+    font-size: 2rem;
+  }
+
+  .preview-numeral {
+    font-size: 2.5rem;
+  }
+}
