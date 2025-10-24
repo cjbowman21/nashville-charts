@@ -43,4 +43,14 @@ export const commentsApi = {
   delete: (chartId, commentId) => api.delete(`/charts/${chartId}/comments/${commentId}`)
 }
 
+// Feedback API
+export const feedbackApi = {
+  create: (data) => api.post('/feedback', data),
+  getById: (id) => api.get(`/feedback/${id}`),
+  getMine: () => api.get('/feedback/mine')
+}
+
+// Add submitFeedback as a direct method on the default export for convenience
+api.submitFeedback = feedbackApi.create
+
 export default api

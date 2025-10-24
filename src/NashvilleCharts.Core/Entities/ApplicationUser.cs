@@ -13,4 +13,5 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<Chart> Charts { get; set; } = new List<Chart>();
     public virtual ICollection<ChartVote> Votes { get; set; } = new List<ChartVote>();
     public virtual ICollection<ChartComment> Comments { get; set; } = new List<ChartComment>();
+    public virtual ICollection<Feedback> FeedbackSubmissions { get; set; } = new List<Feedback>();
 }

@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ChartComment> ChartComments { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<ChartTag> ChartTags { get; set; }
+    public DbSet<Feedback> Feedbacks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -104,6 +105,21 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasOne(e => e.Tag)
                 .WithMany(t => t.ChartTags)
                 .HasForeignKey(e => e.TagId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Feedback configuration
+        builder.Entity<Feedback>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.FeedbackSubmissions)
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

@@ -23,6 +23,19 @@ function Layout({ children }) {
                 </>
               )}
             </Nav>
+            {user && (
+              <Nav className="me-3">
+                <Button
+                  as={Link}
+                  to="/feedback"
+                  variant="warning"
+                  size="sm"
+                  className="fw-bold"
+                >
+                  Send Feedback
+                </Button>
+              </Nav>
+            )}
             <Nav>
               {user ? (
                 <>
