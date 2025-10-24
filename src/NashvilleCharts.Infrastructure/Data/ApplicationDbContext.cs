@@ -36,8 +36,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.Property(e => e.Content)
-                .HasColumnType("nvarchar(max)");
+            // Don't specify column type - let EF Core choose the right type for each database
+            // SQL Server will use nvarchar(max), PostgreSQL will use text
         });
 
         // ChartVote configuration
