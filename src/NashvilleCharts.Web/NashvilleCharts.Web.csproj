@@ -23,8 +23,12 @@
     <ProjectReference Include="..\NashvilleCharts.Infrastructure\NashvilleCharts.Infrastructure.csproj" />
   </ItemGroup>
 
-  <!-- Build the React app when publishing -->
-  <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+  <!-- Build the React app when publishing (skip in Docker with -p:BuildSpaOnPublish=false) -->
+  <PropertyGroup>
+    <BuildSpaOnPublish Condition="'$(BuildSpaOnPublish)' == ''">true</BuildSpaOnPublish>
+  </PropertyGroup>
+
+  <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish" Condition="'$(BuildSpaOnPublish)' == 'true'">
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
   </Target>

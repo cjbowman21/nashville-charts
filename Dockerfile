@@ -26,8 +26,8 @@ COPY src/ ./src/
 # Copy React build output to wwwroot
 COPY --from=frontend-build /app/frontend/dist ./src/NashvilleCharts.Web/wwwroot/
 
-# Publish application
-RUN dotnet publish src/NashvilleCharts.Web/NashvilleCharts.Web.csproj -c Release -o /app/publish
+# Publish application (skip SPA build since we already built it in Stage 1)
+RUN dotnet publish src/NashvilleCharts.Web/NashvilleCharts.Web.csproj -c Release -o /app/publish -p:BuildSpaOnPublish=false
 
 # Stage 3: Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
