@@ -17,8 +17,20 @@ builder.Services.AddControllersWithViews();
 
 // Configure database - Support both SQL Server (local) and PostgreSQL (Railway)
 // Check DATABASE_URL first (Railway), then fall back to appsettings.json (local dev)
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var connectionString = databaseUrl ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Log connection info (without exposing password)
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    builder.Logging.AddConsole();
+    var logMessage = databaseUrl.StartsWith("postgres") ? "Using PostgreSQL from DATABASE_URL" : "Using connection from DATABASE_URL";
+    Console.WriteLine($"INFO: {logMessage}");
+}
+else
+{
+    Console.WriteLine("INFO: Using connection string from appsettings.json");
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -26,14 +38,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     if (!string.IsNullOrEmpty(connectionString) &&
         (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
     {
-        // Railway provides postgres:// URLs, but Npgsql needs postgresql://
-        var postgresConnection = connectionString.Replace("postgres://", "postgresql://");
-        options.UseNpgsql(postgresConnection,
+        // Parse Railway's DATABASE_URL format: postgres://user:password@host:port/database
+        // Convert to Npgsql connection string format
+        var uri = new Uri(connectionString);
+        var npgsqlConnectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};SSL Mode=Require;Trust Server Certificate=true";
+
+        Console.WriteLine($"INFO: Connecting to PostgreSQL at {uri.Host}:{uri.Port}");
+        options.UseNpgsql(npgsqlConnectionString,
             b => b.MigrationsAssembly("NashvilleCharts.Infrastructure"));
     }
     else
     {
         // Default to SQL Server for local development
+        Console.WriteLine("INFO: Using SQL Server");
         options.UseSqlServer(connectionString ?? "",
             b => b.MigrationsAssembly("NashvilleCharts.Infrastructure"));
     }
