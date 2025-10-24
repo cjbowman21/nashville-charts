@@ -8,6 +8,7 @@ import MyCharts from './pages/MyCharts'
 import Browse from './pages/Browse'
 import Login from './pages/Login'
 import ChartDemo from './pages/ChartDemo'
+import Feedback from './pages/Feedback'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/charts/:id" element={<ChartView />} />
           <Route path="/charts/:id/edit" element={<ChartEditor />} />
           <Route path="/my-charts" element={<MyCharts />} />
+          <Route path="/feedback" element={<Feedback />} />
         </Routes>
       </Layout>
     </AuthProvider>
