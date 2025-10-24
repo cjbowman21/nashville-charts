@@ -8,6 +8,10 @@ using NashvilleCharts.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to bind to Railway's PORT environment variable
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // Add services to the container
 builder.Services.AddControllersWithViews();
 
@@ -84,14 +88,19 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHttpsRedirection();
 }
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    // Don't use HSTS or HTTPS redirection in production (Railway handles SSL at load balancer)
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                          Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+    });
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
