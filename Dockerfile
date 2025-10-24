@@ -4,7 +4,8 @@ WORKDIR /app/frontend
 COPY src/NashvilleCharts.Web/ClientApp/package*.json ./
 RUN npm install
 COPY src/NashvilleCharts.Web/ClientApp/ ./
-RUN npm run build
+# Override outDir to build to ./dist instead of ../wwwroot
+RUN npm run build -- --outDir ./dist
 
 # Stage 2: Build .NET application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-build
