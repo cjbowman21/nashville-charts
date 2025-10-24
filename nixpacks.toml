@@ -1,0 +1,17 @@
+[phases.setup]
+nixPkgs = ["nodejs", "dotnet-sdk_8"]
+
+[phases.install]
+cmds = [
+  "dotnet restore src/NashvilleCharts.Web/NashvilleCharts.Web.csproj",
+  "cd src/NashvilleCharts.Web/ClientApp && npm install"
+]
+
+[phases.build]
+cmds = [
+  "cd src/NashvilleCharts.Web/ClientApp && npm run build",
+  "dotnet publish src/NashvilleCharts.Web/NashvilleCharts.Web.csproj -c Release -o output"
+]
+
+[start]
+cmd = "cd output && dotnet NashvilleCharts.Web.dll"

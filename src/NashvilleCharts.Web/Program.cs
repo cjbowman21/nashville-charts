@@ -11,11 +11,28 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllersWithViews();
 
-// Configure database
+// Configure database - Support both SQL Server (local) and PostgreSQL (Railway)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("NashvilleCharts.Infrastructure")));
+{
+    // Use PostgreSQL if connection string starts with postgres:// or postgresql://
+    if (!string.IsNullOrEmpty(connectionString) &&
+        (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
+    {
+        // Railway provides postgres:// URLs, but Npgsql needs postgresql://
+        var postgresConnection = connectionString.Replace("postgres://", "postgresql://");
+        options.UseNpgsql(postgresConnection,
+            b => b.MigrationsAssembly("NashvilleCharts.Infrastructure"));
+    }
+    else
+    {
+        // Default to SQL Server for local development
+        options.UseSqlServer(connectionString ?? "",
+            b => b.MigrationsAssembly("NashvilleCharts.Infrastructure"));
+    }
+});
 
 // Configure Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
