@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NashvilleCharts.Core.Entities;
@@ -11,6 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure Kestrel to bind to Railway's PORT environment variable
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
+// Configure forwarded headers for Railway proxy (handles SSL termination)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Add services to the container
 builder.Services.AddControllersWithViews();
@@ -131,6 +140,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline
+// UseForwardedHeaders must be called before any middleware that needs to know the request scheme
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -141,11 +153,6 @@ else
 {
     app.UseExceptionHandler("/Home/Error");
     // Don't use HSTS or HTTPS redirection in production (Railway handles SSL at load balancer)
-    app.UseForwardedHeaders(new ForwardedHeadersOptions
-    {
-        ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
-                          Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
-    });
 }
 
 app.UseStaticFiles();
