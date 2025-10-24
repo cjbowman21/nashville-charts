@@ -36,8 +36,8 @@ WORKDIR /app
 # Copy published app
 COPY --from=backend-build /app/publish .
 
-# Configure for Railway
-ENV ASPNETCORE_URLS=http://+:$PORT
+# Railway will provide PORT environment variable at runtime
+# Program.cs reads PORT and binds to http://0.0.0.0:{PORT}
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Expose port (Railway will override with $PORT)
