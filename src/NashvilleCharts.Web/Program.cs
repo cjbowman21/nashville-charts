@@ -83,6 +83,35 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Initialize database on startup (for containerized deployments like Railway)
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+
+        // For initial deployment: create database schema if it doesn't exist
+        // TODO: Replace with proper migrations (run 'dotnet ef migrations add InitialCreate' locally)
+        if (context.Database.GetPendingMigrations().Any())
+        {
+            context.Database.Migrate();
+            app.Logger.LogInformation("Database migrations applied successfully.");
+        }
+        else if (!context.Database.CanConnect() || !context.Database.GetAppliedMigrations().Any())
+        {
+            // No migrations exist yet - create schema directly
+            context.Database.EnsureCreated();
+            app.Logger.LogInformation("Database schema created successfully.");
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "An error occurred while initializing the database.");
+        throw;
+    }
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
