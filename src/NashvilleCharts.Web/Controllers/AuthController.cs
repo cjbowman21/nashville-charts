@@ -138,8 +138,9 @@ public class AuthController : ControllerBase
                 await _userManager.UpdateAsync(user);
             }
 
-            // Redirect to React app
-            return Redirect($"http://localhost:5173{returnUrl ?? "/"}");
+            // Redirect to the app's base URL (preserves scheme and host)
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            return Redirect($"{baseUrl}{returnUrl ?? "/"}");
         }
 
         if (result.IsLockedOut)
@@ -176,7 +177,8 @@ public class AuthController : ControllerBase
                 if (createResult.Succeeded)
                 {
                     await _signInManager.SignInAsync(user, isPersistent: true);
-                    return Redirect($"http://localhost:5173{returnUrl ?? "/"}");
+                    var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                    return Redirect($"{baseUrl}{returnUrl ?? "/"}");
                 }
             }
 
