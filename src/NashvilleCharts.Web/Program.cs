@@ -78,6 +78,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Configure Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
 // Configure OAuth Authentication
 builder.Services.AddAuthentication(options =>
 {
@@ -197,6 +203,35 @@ using (var scope = app.Services.CreateScope())
             ");
 
             app.Logger.LogInformation("Feedbacks table created successfully.");
+        }
+
+        // Seed Admin role and assign to first user
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+        // Ensure Admin role exists
+        if (!await roleManager.RoleExistsAsync("Admin"))
+        {
+            var roleResult = await roleManager.CreateAsync(new IdentityRole("Admin"));
+            if (roleResult.Succeeded)
+            {
+                app.Logger.LogInformation("Admin role created successfully.");
+            }
+        }
+
+        // Assign Admin role to the first user (or all users if only one exists)
+        var users = await userManager.Users.ToListAsync();
+        if (users.Count == 1)
+        {
+            var firstUser = users[0];
+            if (!await userManager.IsInRoleAsync(firstUser, "Admin"))
+            {
+                var addRoleResult = await userManager.AddToRoleAsync(firstUser, "Admin");
+                if (addRoleResult.Succeeded)
+                {
+                    app.Logger.LogInformation("User {Email} assigned Admin role.", firstUser.Email);
+                }
+            }
         }
     }
     catch (Exception ex)

@@ -43,6 +43,7 @@ public class AuthController : ControllerBase
         if (result.Succeeded)
         {
             await _signInManager.SignInAsync(user, isPersistent: true);
+            var roles = await _userManager.GetRolesAsync(user);
 
             return Ok(new
             {
@@ -52,7 +53,8 @@ public class AuthController : ControllerBase
                     id = user.Id,
                     email = user.Email,
                     displayName = user.DisplayName,
-                    userName = user.UserName
+                    userName = user.UserName,
+                    roles = roles
                 }
             });
         }
@@ -79,6 +81,7 @@ public class AuthController : ControllerBase
             {
                 user.LastLoginAt = DateTime.UtcNow;
                 await _userManager.UpdateAsync(user);
+                var roles = await _userManager.GetRolesAsync(user);
 
                 return Ok(new
                 {
@@ -88,7 +91,8 @@ public class AuthController : ControllerBase
                         id = user.Id,
                         email = user.Email,
                         displayName = user.DisplayName,
-                        userName = user.UserName
+                        userName = user.UserName,
+                        roles = roles
                     }
                 });
             }
@@ -214,6 +218,8 @@ public class AuthController : ControllerBase
             return Ok(new { isAuthenticated = false });
         }
 
+        var roles = await _userManager.GetRolesAsync(user);
+
         return Ok(new
         {
             isAuthenticated = true,
@@ -222,7 +228,8 @@ public class AuthController : ControllerBase
                 id = user.Id,
                 email = user.Email,
                 displayName = user.DisplayName,
-                userName = user.UserName
+                userName = user.UserName,
+                roles = roles
             }
         });
     }

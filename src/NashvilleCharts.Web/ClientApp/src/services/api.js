@@ -50,6 +50,25 @@ export const feedbackApi = {
   getMine: () => api.get('/feedback/mine')
 }
 
+// Admin API
+export const adminApi = {
+  // User Management
+  getAllUsers: (params) => api.get('/admin/users', { params }),
+  getUser: (id) => api.get(`/admin/users/${id}`),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  assignRole: (id, roleName) => api.post(`/admin/users/${id}/assign-role`, { roleName }),
+  removeRole: (id, roleName) => api.post(`/admin/users/${id}/remove-role`, { roleName }),
+  resetPassword: (id, newPassword) => api.post(`/admin/users/${id}/reset-password`, { newPassword }),
+  lockUser: (id, lockoutEnd) => api.post(`/admin/users/${id}/lock`, { lockoutEnd }),
+  unlockUser: (id) => api.post(`/admin/users/${id}/unlock`),
+
+  // Feedback Management
+  getAllFeedback: (params) => api.get('/admin/feedback', { params }),
+  updateFeedback: (id, data) => api.put(`/admin/feedback/${id}`, data),
+  deleteFeedback: (id) => api.delete(`/admin/feedback/${id}`),
+  getFeedbackStats: () => api.get('/admin/feedback/stats')
+}
+
 // Add submitFeedback as a direct method on the default export for convenience
 api.submitFeedback = feedbackApi.create
 
