@@ -20,6 +20,9 @@ function Layout({ children }) {
                 <>
                   <Nav.Link as={Link} to="/my-charts">My Charts</Nav.Link>
                   <Nav.Link as={Link} to="/charts/new">New Chart</Nav.Link>
+                  {user.roles?.includes('Admin') && (
+                    <Nav.Link as={Link} to="/admin" className="text-warning fw-bold">Admin</Nav.Link>
+                  )}
                 </>
               )}
             </Nav>
