@@ -131,6 +131,49 @@ using (var scope = app.Services.CreateScope())
             context.Database.EnsureCreated();
             app.Logger.LogInformation("Database schema created successfully.");
         }
+
+        // Check if Feedbacks table exists, create it if missing (for existing databases)
+        bool feedbacksTableExists;
+        try
+        {
+            // Try to query the Feedbacks table - if it doesn't exist, this will throw
+            context.Database.ExecuteSqlRaw("SELECT 1 FROM \"Feedbacks\" LIMIT 0");
+            feedbacksTableExists = true;
+            app.Logger.LogInformation("Feedbacks table already exists.");
+        }
+        catch
+        {
+            feedbacksTableExists = false;
+        }
+
+        if (!feedbacksTableExists)
+        {
+            app.Logger.LogInformation("Feedbacks table not found. Creating table...");
+
+            context.Database.ExecuteSqlRaw(@"
+                CREATE TABLE ""Feedbacks"" (
+                    ""Id"" uuid NOT NULL,
+                    ""UserId"" text NOT NULL,
+                    ""Type"" character varying(20) NOT NULL,
+                    ""Title"" character varying(200) NOT NULL,
+                    ""Description"" character varying(5000) NOT NULL,
+                    ""Priority"" character varying(20) NOT NULL DEFAULT 'Medium',
+                    ""Status"" character varying(50) NOT NULL DEFAULT 'New',
+                    ""CreatedAt"" timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+                    ""UpdatedAt"" timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+                    CONSTRAINT ""PK_Feedbacks"" PRIMARY KEY (""Id""),
+                    CONSTRAINT ""FK_Feedbacks_AspNetUsers_UserId"" FOREIGN KEY (""UserId"")
+                        REFERENCES ""AspNetUsers"" (""Id"") ON DELETE CASCADE
+                );
+
+                CREATE INDEX ""IX_Feedbacks_UserId"" ON ""Feedbacks"" (""UserId"");
+                CREATE INDEX ""IX_Feedbacks_Type"" ON ""Feedbacks"" (""Type"");
+                CREATE INDEX ""IX_Feedbacks_Status"" ON ""Feedbacks"" (""Status"");
+                CREATE INDEX ""IX_Feedbacks_CreatedAt"" ON ""Feedbacks"" (""CreatedAt"");
+            ");
+
+            app.Logger.LogInformation("Feedbacks table created successfully.");
+        }
     }
     catch (Exception ex)
     {
