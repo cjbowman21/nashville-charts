@@ -25,6 +25,8 @@ public class FeedbackController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<FeedbackDto>> CreateFeedback([FromBody] CreateFeedbackDto dto)
     {
+        _logger.LogInformation("Feedback submission received. User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
+
         // Validate input
         if (string.IsNullOrWhiteSpace(dto.Title) || dto.Title.Length > 200)
             return BadRequest("Title is required and must be 200 characters or less");
@@ -39,8 +41,13 @@ public class FeedbackController : ControllerBase
             return BadRequest("Priority must be 'Low', 'Medium', or 'High'");
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        _logger.LogInformation("User ID from claims: {UserId}", userId ?? "null");
+
         if (string.IsNullOrEmpty(userId))
+        {
+            _logger.LogWarning("No user ID found in claims despite [Authorize] attribute");
             return Unauthorized();
+        }
 
         var feedback = new Feedback
         {

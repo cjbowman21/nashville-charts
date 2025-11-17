@@ -39,7 +39,13 @@ const Feedback = () => {
       // Hide success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
-      setError(err.response?.data || 'Failed to submit feedback. Please try again.');
+      if (err.response?.status === 401) {
+        setError('Your session has expired. Please log in again.');
+      } else if (err.response?.status === 403) {
+        setError('You do not have permission to submit feedback.');
+      } else {
+        setError(err.response?.data || 'Failed to submit feedback. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
