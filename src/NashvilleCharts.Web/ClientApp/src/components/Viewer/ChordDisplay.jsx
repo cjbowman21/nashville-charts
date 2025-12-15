@@ -8,8 +8,8 @@ import './ChordDisplay.css'
 /**
  * Displays a single chord with proper Nashville Number notation
  */
-function ChordDisplay({ chord, isSplit = false, chartKey = null }) {
-  const display = formatChordDisplay(chord)
+function ChordDisplay({ chord, isSplit = false, chartKey = null, numeralFormat = 'roman' }) {
+  const display = formatChordDisplay(chord, numeralFormat)
   const graphicalMods = getGraphicalModifiers(chord)
 
   // Determine which graphical modifiers to show
@@ -106,7 +106,8 @@ function ChordDisplay({ chord, isSplit = false, chartKey = null }) {
 ChordDisplay.propTypes = {
   chord: PropTypes.object.isRequired,
   isSplit: PropTypes.bool,
-  chartKey: PropTypes.string
+  chartKey: PropTypes.string,
+  numeralFormat: PropTypes.string
 }
 
 export default ChordDisplay

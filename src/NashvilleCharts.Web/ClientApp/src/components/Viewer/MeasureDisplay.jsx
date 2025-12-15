@@ -6,7 +6,7 @@ import './MeasureDisplay.css'
 /**
  * Displays a single measure with one or more chords
  */
-function MeasureDisplay({ measure, chartKey = null }) {
+function MeasureDisplay({ measure, chartKey = null, numeralFormat = 'roman' }) {
   const isSplit = measure.chords.length > 1
 
   return (
@@ -17,6 +17,7 @@ function MeasureDisplay({ measure, chartKey = null }) {
           chord={chord}
           isSplit={isSplit}
           chartKey={chartKey}
+          numeralFormat={numeralFormat}
         />
       ))}
     </div>
@@ -25,7 +26,8 @@ function MeasureDisplay({ measure, chartKey = null }) {
 
 MeasureDisplay.propTypes = {
   measure: PropTypes.object.isRequired,
-  chartKey: PropTypes.string
+  chartKey: PropTypes.string,
+  numeralFormat: PropTypes.string
 }
 
 export default MeasureDisplay

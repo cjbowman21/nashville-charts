@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { Modal, Button, ButtonGroup, Badge } from 'react-bootstrap'
 import { ChordModifiers } from '../../models/Chart'
+import { convertNumeral, arabicToRoman, romanToArabic } from '../../utils/chartUtils'
 import './ChordBottomSheet.css'
 
 /**
  * Bottom sheet for selecting chord numerals and modifiers
  * Mobile-first design with large touch targets
  */
-function ChordBottomSheet({ show, onHide, onChordSelected, initialData = null }) {
+function ChordBottomSheet({ show, onHide, onChordSelected, initialData = null, numeralFormat = 'roman' }) {
   const [selectedNumeral, setSelectedNumeral] = useState(null)
   const [selectedAccidental, setSelectedAccidental] = useState(null)
   const [selectedModifiers, setSelectedModifiers] = useState([])
@@ -17,17 +18,25 @@ function ChordBottomSheet({ show, onHide, onChordSelected, initialData = null })
   // Pre-populate form when editing existing chord
   useEffect(() => {
     if (show && initialData) {
-      setSelectedNumeral(initialData.numeral || null)
+      // Convert stored Roman numeral to display format
+      const displayNumeral = convertNumeral(initialData.numeral || '', numeralFormat)
+      setSelectedNumeral(displayNumeral || null)
       setSelectedAccidental(initialData.accidental || null)
       setSelectedModifiers(initialData.modifiers || [])
-      setBassNote(initialData.bassNote || null)
+      // Convert bass note too
+      const displayBassNote = initialData.bassNote ? convertNumeral(initialData.bassNote, numeralFormat) : null
+      setBassNote(displayBassNote)
     } else if (show && !initialData) {
       // Reset when creating new chord
       handleReset()
     }
-  }, [show, initialData])
+  }, [show, initialData, numeralFormat])
 
-  const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+  // Generate numerals in the display format
+  const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+  const numerals = numeralFormat === 'arabic' 
+    ? romanNumerals.map(r => convertNumeral(r, 'arabic'))
+    : romanNumerals
   const accidentals = [
     { value: null, label: 'Natural' },
     { value: 'b', label: '♭ Flat' },
@@ -62,11 +71,20 @@ function ChordBottomSheet({ show, onHide, onChordSelected, initialData = null })
   const handleAdd = () => {
     if (!selectedNumeral) return
 
+    // Convert display format back to Roman for storage
+    const romanNumeral = numeralFormat === 'arabic' 
+      ? arabicToRoman(parseInt(selectedNumeral))
+      : selectedNumeral
+    
+    const romanBassNote = bassNote && numeralFormat === 'arabic'
+      ? arabicToRoman(parseInt(bassNote))
+      : bassNote
+
     const chord = {
-      numeral: selectedNumeral,
+      numeral: romanNumeral,
       accidental: selectedAccidental,
       modifiers: selectedModifiers,
-      bassNote: bassNote
+      bassNote: romanBassNote
     }
 
     onChordSelected(chord)
@@ -240,7 +258,8 @@ ChordBottomSheet.propTypes = {
     accidental: PropTypes.string,
     modifiers: PropTypes.array,
     bassNote: PropTypes.string
-  })
+  }),
+  numeralFormat: PropTypes.string
 }
 
 export default ChordBottomSheet

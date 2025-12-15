@@ -154,6 +154,7 @@ export class Chart {
 
     // Display settings
     this.measuresPerLine = 4      // Default layout
+    this.numeralFormat = 'roman'  // 'roman' or 'arabic'
   }
 
   // Serialization
@@ -227,7 +228,8 @@ export class Chart {
     })
 
     if (json.displaySettings) {
-      chart.measuresPerLine = json.displaySettings.measuresPerLine
+      chart.measuresPerLine = json.displaySettings.measuresPerLine || 4
+      chart.numeralFormat = json.displaySettings.numeralFormat || 'roman'
     }
 
     return chart

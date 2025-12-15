@@ -75,6 +75,7 @@ function ChartRenderer({ chart, showMetadata = true }) {
             section={section}
             measuresPerLine={chart.measuresPerLine}
             chartKey={chart.key}
+            numeralFormat={chart.numeralFormat || 'roman'}
           />
         ))}
       </div>

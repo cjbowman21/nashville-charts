@@ -8,7 +8,7 @@ import './SectionDisplay.css'
 /**
  * Displays a section of the chart (Verse, Chorus, etc.)
  */
-function SectionDisplay({ section, measuresPerLine = 4, chartKey = null }) {
+function SectionDisplay({ section, measuresPerLine = 4, chartKey = null, numeralFormat = 'roman' }) {
   const lines = layoutMeasures(section.measures, measuresPerLine)
 
   // Tooltip for section type
@@ -60,6 +60,7 @@ function SectionDisplay({ section, measuresPerLine = 4, chartKey = null }) {
                 key={`${lineIndex}-${measureIndex}`}
                 measure={measure}
                 chartKey={chartKey}
+                numeralFormat={numeralFormat}
               />
             ))}
           </div>
@@ -72,7 +73,8 @@ function SectionDisplay({ section, measuresPerLine = 4, chartKey = null }) {
 SectionDisplay.propTypes = {
   section: PropTypes.object.isRequired,
   measuresPerLine: PropTypes.number,
-  chartKey: PropTypes.string
+  chartKey: PropTypes.string,
+  numeralFormat: PropTypes.string
 }
 
 export default SectionDisplay

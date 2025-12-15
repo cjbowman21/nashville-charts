@@ -359,6 +359,30 @@ function ChartEditor() {
                   </Col>
                 </Row>
 
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Numeral Format</Form.Label>
+                      <Form.Select
+                        value={chart.numeralFormat || 'roman'}
+                        onChange={(e) => {
+                          setChart(prevChart => {
+                            const updated = Chart.fromJSON(prevChart.toJSON())
+                            updated.numeralFormat = e.target.value
+                            return updated
+                          })
+                        }}
+                      >
+                        <option value="roman">Roman Numerals (I, II, III, IV, V, VI, VII)</option>
+                        <option value="arabic">Arabic Numerals (1, 2, 3, 4, 5, 6, 7)</option>
+                      </Form.Select>
+                      <Form.Text className="text-muted">
+                        Choose how chord numbers are displayed in the chart
+                      </Form.Text>
+                    </Form.Group>
+                  </Col>
+                </Row>
+
                 <Form.Group className="mb-3">
                   <Form.Label>Notes</Form.Label>
                   <Form.Control
@@ -519,6 +543,7 @@ function ChartEditor() {
         }}
         onChordSelected={handleChordSelected}
         initialData={getInitialChordData()}
+        numeralFormat={chart.numeralFormat || 'roman'}
       />
     </Container>
   )

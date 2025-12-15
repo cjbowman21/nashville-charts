@@ -34,7 +34,18 @@ export function getNoteForNumeral(numeral, key, accidental = null) {
     throw new Error(`Invalid key: ${key}`)
   }
 
-  // Convert Roman numeral to scale degree (0-6)
+  // Convert numeral (Roman or Arabic) to scale degree (0-6)
+  // First normalize to Roman if it's Arabic
+  let romanNumeral = numeral.toUpperCase()
+  const arabicNum = parseInt(numeral)
+  if (!isNaN(arabicNum)) {
+    // It's an Arabic number, convert to Roman
+    romanNumeral = arabicToRoman(arabicNum)
+    if (!romanNumeral) {
+      throw new Error(`Invalid numeral: ${numeral}`)
+    }
+  }
+
   const numeralMap = {
     'I': 0,
     'II': 2,
@@ -45,7 +56,7 @@ export function getNoteForNumeral(numeral, key, accidental = null) {
     'VII': 11
   }
 
-  let semitones = numeralMap[numeral.toUpperCase()]
+  let semitones = numeralMap[romanNumeral]
   if (semitones === undefined) {
     throw new Error(`Invalid numeral: ${numeral}`)
   }
@@ -60,6 +71,73 @@ export function getNoteForNumeral(numeral, key, accidental = null) {
   // Calculate the note
   const noteIndex = (keyIndex + semitones) % 12
   return KEYS[noteIndex]
+}
+
+// ============================================================================
+// NUMERAL CONVERSION (Roman ↔ Arabic)
+// ============================================================================
+
+// Map of Roman numerals to Arabic numbers
+const ROMAN_TO_ARABIC = {
+  'I': 1,
+  'II': 2,
+  'III': 3,
+  'IV': 4,
+  'V': 5,
+  'VI': 6,
+  'VII': 7
+}
+
+// Map of Arabic numbers to Roman numerals
+const ARABIC_TO_ROMAN = {
+  1: 'I',
+  2: 'II',
+  3: 'III',
+  4: 'IV',
+  5: 'V',
+  6: 'VI',
+  7: 'VII'
+}
+
+/**
+ * Convert Roman numeral to Arabic number
+ * @param {string} roman - Roman numeral (I, II, III, IV, V, VI, VII)
+ * @returns {number} Arabic number (1-7)
+ */
+export function romanToArabic(roman) {
+  return ROMAN_TO_ARABIC[roman.toUpperCase()] || null
+}
+
+/**
+ * Convert Arabic number to Roman numeral
+ * @param {number} arabic - Arabic number (1-7)
+ * @returns {string} Roman numeral (I, II, III, IV, V, VI, VII)
+ */
+export function arabicToRoman(arabic) {
+  return ARABIC_TO_ROMAN[arabic] || null
+}
+
+/**
+ * Convert a numeral from one format to another
+ * @param {string} numeral - Current numeral (Roman or Arabic string)
+ * @param {string} targetFormat - 'roman' or 'arabic'
+ * @returns {string} Converted numeral
+ */
+export function convertNumeral(numeral, targetFormat) {
+  if (targetFormat === 'arabic') {
+    // Convert Roman to Arabic
+    const arabic = romanToArabic(numeral)
+    return arabic ? arabic.toString() : numeral
+  } else {
+    // Convert Arabic to Roman (default: roman)
+    const arabic = parseInt(numeral)
+    if (!isNaN(arabic)) {
+      const roman = arabicToRoman(arabic)
+      return roman || numeral
+    }
+    // If it's already Roman, return as-is
+    return numeral
+  }
 }
 
 // ============================================================================
@@ -85,7 +163,7 @@ export function getModifierSymbol(modifier) {
 }
 
 // Format chord for display with symbols
-export function formatChordDisplay(chord) {
+export function formatChordDisplay(chord, numeralFormat = 'roman') {
   let display = ''
 
   // Accidental
@@ -93,8 +171,9 @@ export function formatChordDisplay(chord) {
     display += chord.accidental === 'b' ? '♭' : '♯'
   }
 
-  // Numeral
-  display += chord.numeral
+  // Numeral - convert to requested format
+  const displayNumeral = convertNumeral(chord.numeral, numeralFormat)
+  display += displayNumeral
 
   // Quality modifiers (not graphical modifiers)
   const qualityMods = chord.modifiers.filter(m =>
@@ -104,9 +183,10 @@ export function formatChordDisplay(chord) {
     display += getModifierSymbol(mod)
   })
 
-  // Slash chord
+  // Slash chord - convert bass note too
   if (chord.bassNote) {
-    display += '/' + chord.bassNote
+    const displayBassNote = convertNumeral(chord.bassNote, numeralFormat)
+    display += '/' + displayBassNote
   }
 
   return display
@@ -279,6 +359,9 @@ export default {
   KEYS,
   normalizeKey,
   getNoteForNumeral,
+  romanToArabic,
+  arabicToRoman,
+  convertNumeral,
   formatChordDisplay,
   getGraphicalModifiers,
   validateChart,
