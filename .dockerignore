@@ -1,0 +1,40 @@
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Node modules
+**/node_modules/
+**/dist/
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+**/TestResults/
+**/*.trx
+
+# Sensitive data
+appsettings.Development.json
+appsettings.Production.json
+*.user
+*.suo
