@@ -178,6 +178,7 @@ public class ChartsController : ControllerBase
             ViewCount = chart.ViewCount,
             NetVotes = chart.Votes.Sum(v => v.VoteType),
             UserVote = userVote?.VoteType,
+            CommentCount = chart.Comments.Count(c => c.DeletedAt == null),
             CreatedAt = chart.CreatedAt,
             UpdatedAt = chart.UpdatedAt
         };

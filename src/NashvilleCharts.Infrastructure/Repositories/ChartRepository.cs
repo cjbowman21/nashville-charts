@@ -35,6 +35,7 @@ public class ChartRepository : IChartRepository
         var query = _context.Charts
             .Include(c => c.User)
             .Include(c => c.Votes)
+            .Include(c => c.Comments.Where(c => c.DeletedAt == null))
             .AsQueryable();
 
         if (!includePrivate)
@@ -69,6 +70,7 @@ public class ChartRepository : IChartRepository
         var searchQuery = _context.Charts
             .Include(c => c.User)
             .Include(c => c.Votes)
+            .Include(c => c.Comments.Where(c => c.DeletedAt == null))
             .Where(c => c.DeletedAt == null &&
                        (c.Title.Contains(query) ||
                         (c.Artist != null && c.Artist.Contains(query))))
@@ -90,6 +92,7 @@ public class ChartRepository : IChartRepository
         return await _context.Charts
             .Include(c => c.User)
             .Include(c => c.Votes)
+            .Include(c => c.Comments.Where(c => c.DeletedAt == null))
             .Where(c => c.IsPublic && c.DeletedAt == null)
             .OrderByDescending(c => c.Votes.Sum(v => v.VoteType))
             .ThenByDescending(c => c.ViewCount)

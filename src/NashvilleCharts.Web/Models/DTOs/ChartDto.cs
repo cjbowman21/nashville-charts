@@ -16,6 +16,7 @@ public class ChartDto
     public int ViewCount { get; set; }
     public int NetVotes { get; set; }
     public int? UserVote { get; set; } // null, 1, or -1
+    public int CommentCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, Row, Col, Form, Button, Badge } from 'react-bootstrap'
-import { chartsApi } from '../services/api'
+import { chartsApi, votesApi } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 function Browse() {
   const [charts, setCharts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [sort, setSort] = useState('recent')
+  const { user } = useAuth()
 
   useEffect(() => {
     loadCharts()
@@ -40,6 +42,34 @@ function Browse() {
       console.error('Search failed:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleUpvoteClick = async (event, chartId, currentUserVote) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (!user) {
+      alert('Please log in to vote on charts.')
+      return
+    }
+
+    try {
+      let response
+      if (currentUserVote === 1) {
+        response = await votesApi.removeVote(chartId)
+      } else {
+        response = await votesApi.vote(chartId, 1)
+      }
+
+      const { netVotes, userVote } = response.data
+      setCharts((prev) =>
+        prev.map((c) =>
+          c.id === chartId ? { ...c, netVotes, userVote } : c
+        )
+      )
+    } catch (error) {
+      console.error('Failed to submit vote:', error)
     }
   }
 
@@ -92,7 +122,18 @@ function Browse() {
                   <div className="text-muted small">
                     <span className="me-3">👤 {chart.userDisplayName}</span>
                     <span className="me-3">👁️ {chart.viewCount}</span>
-                    <span>👍 {chart.netVotes}</span>
+                    <span className="me-3">
+                      <Button
+                        variant={chart.userVote === 1 ? 'success' : 'outline-success'}
+                        size="sm"
+                        onClick={(e) => handleUpvoteClick(e, chart.id, chart.userVote)}
+                      >
+                        👍 {chart.netVotes}
+                      </Button>
+                    </span>
+                    <span>
+                      💬 {chart.commentCount}
+                    </span>
                   </div>
                 </Card.Body>
               </Card>
