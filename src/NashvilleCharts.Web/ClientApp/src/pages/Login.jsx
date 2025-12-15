@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Container, Row, Col, Card, Button, Form, Tabs, Tab, Alert } from 'react-bootstrap'
 import { useAuth } from '../contexts/AuthContext'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 
 function Login() {
   const { user, register, loginWithPassword, loginWithProvider } = useAuth()
   const [activeTab, setActiveTab] = useState('login')
+  const location = useLocation()
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('')
@@ -20,6 +21,46 @@ function Login() {
   // UI state
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Read error code from query string on initial render and map to friendly message
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const errorCode = params.get('error')
+
+    if (!errorCode) {
+      return
+    }
+
+    let message = ''
+
+    switch (errorCode) {
+      case 'external_no_email':
+        message =
+          "We couldn’t get your email address from the external provider. Please sign up with email and password."
+        break
+      case 'external_link_failed':
+        message =
+          'We couldn’t link your external account. Try logging in with your email and password instead.'
+        break
+      case 'external_remote_error':
+      case 'external_info_null':
+      case 'external_signup_failed':
+        message =
+          'Something went wrong while signing you in. Please try again or use email and password.'
+        break
+      case 'external_locked_out':
+        message =
+          'Your account appears to be locked out. Please try again later or contact support.'
+        break
+      default:
+        // Unknown error code; leave existing error state unchanged
+        break
+    }
+
+    if (message) {
+      setError(message)
+    }
+  }, [location.search])
 
   if (user) {
     return <Navigate to="/" replace />

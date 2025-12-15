@@ -115,15 +115,19 @@ public class AuthController : ControllerBase
     [HttpGet("callback")]
     public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
     {
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
         if (remoteError != null)
         {
-            return BadRequest($"Error from external provider: {remoteError}");
+            // Redirect back to SPA with a friendly error code
+            return Redirect($"{baseUrl}/login?error=external_remote_error");
         }
 
         var info = await _signInManager.GetExternalLoginInfoAsync();
         if (info == null)
         {
-            return BadRequest("Error loading external login information");
+            // Could not load info from external provider
+            return Redirect($"{baseUrl}/login?error=external_info_null");
         }
 
         // Sign in the user with this external login provider if the user already has a login
@@ -143,51 +147,66 @@ public class AuthController : ControllerBase
             }
 
             // Redirect to the app's base URL (preserves scheme and host)
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
             return Redirect($"{baseUrl}{returnUrl ?? "/"}");
         }
 
         if (result.IsLockedOut)
         {
-            return BadRequest("User account locked out");
+            // Redirect to login page with locked-out error
+            return Redirect($"{baseUrl}/login?error=external_locked_out");
         }
-        else
+
+        // If the user does not have an external login yet, try to link or create
+        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        var name = info.Principal.FindFirstValue(ClaimTypes.Name);
+
+        if (string.IsNullOrEmpty(email))
         {
-            // If the user does not have an account, create one
-            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-            var name = info.Principal.FindFirstValue(ClaimTypes.Name);
-
-            if (string.IsNullOrEmpty(email))
-            {
-                return BadRequest("Email not provided by external login provider");
-            }
-
-            var user = new ApplicationUser
-            {
-                UserName = email,
-                Email = email,
-                DisplayName = name ?? email.Split('@')[0],
-                EmailConfirmed = true,
-                CreatedAt = DateTime.UtcNow,
-                LastLoginAt = DateTime.UtcNow
-            };
-
-            var createResult = await _userManager.CreateAsync(user);
-
-            if (createResult.Succeeded)
-            {
-                createResult = await _userManager.AddLoginAsync(user, info);
-
-                if (createResult.Succeeded)
-                {
-                    await _signInManager.SignInAsync(user, isPersistent: true);
-                    var baseUrl = $"{Request.Scheme}://{Request.Host}";
-                    return Redirect($"{baseUrl}{returnUrl ?? "/"}");
-                }
-            }
-
-            return BadRequest($"Error creating user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+            // Email is required to associate or create an account
+            return Redirect($"{baseUrl}/login?error=external_no_email");
         }
+
+        // First, try to find an existing user with this email and link the external login
+        var existingUser = await _userManager.FindByEmailAsync(email);
+        if (existingUser != null)
+        {
+            var linkResult = await _userManager.AddLoginAsync(existingUser, info);
+            if (linkResult.Succeeded)
+            {
+                existingUser.LastLoginAt = DateTime.UtcNow;
+                await _userManager.UpdateAsync(existingUser);
+                await _signInManager.SignInAsync(existingUser, isPersistent: true);
+                return Redirect($"{baseUrl}{returnUrl ?? "/"}");
+            }
+
+            // Failed to link external login to existing account
+            return Redirect($"{baseUrl}/login?error=external_link_failed");
+        }
+
+        // No user exists with this email; create a new one and link the external login
+        var newUser = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            DisplayName = name ?? email.Split('@')[0],
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            LastLoginAt = DateTime.UtcNow
+        };
+
+        var createUserResult = await _userManager.CreateAsync(newUser);
+        if (createUserResult.Succeeded)
+        {
+            var addLoginResult = await _userManager.AddLoginAsync(newUser, info);
+            if (addLoginResult.Succeeded)
+            {
+                await _signInManager.SignInAsync(newUser, isPersistent: true);
+                return Redirect($"{baseUrl}{returnUrl ?? "/"}");
+            }
+        }
+
+        // Something went wrong creating or linking the user
+        return Redirect($"{baseUrl}/login?error=external_signup_failed");
     }
 
     [Authorize]
